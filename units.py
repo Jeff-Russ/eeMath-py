@@ -1,0 +1,71 @@
+metric_prefixes = {
+  'q': 1e-30, # quecto 0.000000000000000000000000000001
+  'r': 1e-27, # ronto 0.000000000000000000000000001
+  'y': 1e-24, # yocto 0.000000000000000000000001
+  'z': 1e-21, # zepto 0.000000000000000000001
+  'a': 1e-18, # atto 0.000000000000000001
+  'f': 1e-15, # femto 0.000000000000001
+  'p': 1e-12, # pico 0.000000000001
+  'n': 1e-9,  # nano 0.000000001
+  'u': 1e-6,  # micro 0.000001
+  'm': 1e-3,  # milli 0.001
+  'c': 1e-2,  # centi 0.01
+  'd': 1e-1,  # deci 0.1
+  'da': 1e1,  # deca 10
+  'h': 1e2,   # hecto 100
+  'k': 1e3,   # kilo 1000
+  'M': 1e6,   # mega 1000000
+  'G': 1e9,   # giga 1000000000
+  'T': 1e12,  # tera 1000000000000
+  'P': 1e15,  # peta 1000000000000000
+  'E': 1e18,  # exa 1000000000000000000
+  'Z': 1e21,  # zetta 1000000000000000000000
+  'Y': 1e24,  # yotta 1000000000000000000000000
+  'R': 1e27,  # ronna 1000000000000000000000000000
+  'Q': 1e30,  # quetta 1000000000000000000000000000000
+}
+prefix_order = [
+  'q', 'r', 'y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', 'c', 'd', 
+  'da', 'h', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'R', 'Q'
+]
+
+def generateMetricPrefixesFor(unit_name, min='p', max='G', skip_min='c', skip_max='h' ):
+  '''
+  generate global numeric variables whose names are each an 
+  SI metrix prefix + unit_name 
+  and whose values are the multiplier for that metric previx.
+  The number of global generated are limited by the min and max args
+  which each should be a metric prefix character (or two in the case of 'da')
+  for the lowest and highest (inclusive) to generate with any in from the  
+  skip_min='c'  to skip_max='h' (inclusive) excluded. The defaults for
+  skip_min and skip max will skip:
+  'h', 'da', 'd', 'c' which are hecto, deca, deci and centi
+  '''
+  start_idx = prefix_order.index(min)
+  stop_idx = prefix_order.index(max) + 1
+
+  if skip_min and skip_max:
+    check_skips = True
+    skip_min_idx = prefix_order.index(skip_min)
+    skip_max_idx = prefix_order.index(skip_max) 
+  elif not skip_min and not skip_max: check_skips = True
+  else: raise ValueError("if skip_min is provided, then skip_min and visa-versa")
+    
+  for i in range(start_idx, stop_idx):
+    if check_skips and i >= skip_min_idx and i <= skip_max_idx: continue
+    prefix = prefix_order[i]
+    varname = f'{prefix}{unit_name}'
+    value = metric_prefixes[prefix]
+    print(f'{varname}', end=' ')
+    globals()[varname] = value # https://stackoverflow.com/a/4010869
+
+# # doing this here doesn't work. do it from QtConsole:
+# print("eeMath.units available:")
+# generateMetricPrefixesFor('A', min='p', max='G') # pA nA uA mA kA MA GA 
+# # usage: 1.5*pA,
+# generateMetricPrefixesFor('Ohm', min='u', max='G') # uOhm mOhm kOhm MOhm GOhm 
+# # usage: 1.4kOhm
+# generateMetricPrefixesFor('V', min='p', max='k') 
+# # usage: 1.4kmv
+
+# also this: https://stackoverflow.com/questions/31906377/sympy-and-units-for-electric-systems
