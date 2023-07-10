@@ -12,19 +12,22 @@ def func_attr(**attrs): # https://stackoverflow.com/a/54030205
     return f
   return wrap
 
-    
 
 #.......string helpers ........................................................
 
 from io import StringIO
 # printToStr/printlToStr redirect print to a (returned) variable
 def printToStr(*args, **kwargs):
+  '''printToStr forwards all parameters to print, redirecting print's output string to the return'''
   output = StringIO()
   print(*args, file=output, **kwargs)
   contents = output.getvalue()
   output.close()
   return contents
+
 def printlToStr(*args, **kwargs):
+  '''printlToStr forwards all parameters to print, inserting `end=''`, 
+  redirecting print's output string to the return'''
   kwargs['end'] = ''
   return printToStr(*args, **kwargs)
 
@@ -55,8 +58,12 @@ def iSeq(first_or_len, last=None, step=None, seq_type=None, internal_call=False)
     else: return range(s, last+1, step) if last >= s else range(s, last-1, step)    # (first,last,step)
   else: return iSeq.type(iSeq(first_or_len, last, step, internal_call=True))        # cast to type
 
-class ISeq(): # just an object that stores an iSeq but can make it via strings
+class ISeq(): 
+  '''ISeq just makes objects that store an iSeq as obj.iseq, but can make it via strings.
+  ISeq objects also have obj.first and obj.last properties set during construction.'''
   def __init__(self, first_or_range_str, last=None, delim=None, seq_type=list):
+    '''ISeq just makes objects that store an iSeq as obj.iseq, but can make it via strings.
+      ISeq objects also have obj.first and obj.last properties set during construction.'''
     from re import split as re_split, findall as re_findall
     if last is None:
       if isinstance(first_or_range_str, str):
@@ -82,9 +89,7 @@ class ISeq(): # just an object that stores an iSeq but can make it via strings
     orig_type = iSeq.type ; iSeq.type = seq_type
     self.seq = iSeq( int(self.first), int(self.last))
     iSeq.type = orig_type
-    
-
-
+  
     # def strBoth(self): return f'{self.from_iseq} {self.to_iseq}'
     # def strFrom(self): return f'{self.from_iseq}'
     # def strTo(self): return f'{self.to_iseq}'
@@ -92,18 +97,15 @@ class ISeq(): # just an object that stores an iSeq but can make it via strings
 
   def strRange(self): return f'{self.first}{self.delim}{self.last}' if len(self.seq) > 1 else f'{self.first}'
 
-  def __str__(self):
-    return self.strRange()
+  def __str__(self): return self.strRange()
   
-  def __repr__(self):
-    return self.strRange()
+  def __repr__(self): return self.strRange()
 
   def __len__(self): return len(self.seq)
 
 
 # NOTE: requires: iSeq()
 class MapISeqsToISeqs():
-
   def __init__(self, from_iseq=None, to_iseq=None, repr_mode='both', str_mode='both'):
     if not isinstance(from_iseq, ISeq): # from_iseq should be int-able, defining first val in from_iseq
       if not isinstance(to_iseq, ISeq): raise ValueError(f"`to_iseq` must be an instance of ISeq if `from_iseq` is not" )
@@ -152,24 +154,18 @@ class MapISeqsToISeqs():
     _str = self.getStr(self.repr_mode)
     return _str
 
-class IpythonOutputTest():
-    def __init__(self, val): self.val = val
-
-    def __repr__(self):
-      print('__repr__ called')
-      return str(self.val)
-    
-    def __str__(self): 
-      print('__str__ called')
-      return str(self.val)
-
-# import itertools
-
 def flatten(*lists): return [x for row in lists for x in row]
 
-def partitionByContiguousInt(nums):
+def partitionByContiguousInt(*nums):
+  '''partitionByContiguousInt accept a collection of number or a variable number or number arguments
+  and returns a collection of collections where each inner collection is contigous grouping of the numbers
+  passed in. The type of the return (and it's inner collections) is a the same as the type passed in if one
+  argument is given, else it is a list.'''
   from itertools import groupby
   from operator import itemgetter
+
+  if len(nums)==1: nums = nums[0]
+  else: nums = list(nums)
   partitioned = []
   for k, g in groupby(enumerate(nums), lambda i_x: i_x[0] - i_x[1]):
     try: partitioned.append(type(nums)(map(itemgetter(1), g))) # try casting to caller's type
@@ -221,7 +217,6 @@ def setOperation(operator, *settables):
   and the returned result is (((settables[0] op setables[1]) op setables[2]) op setables[3]) etc.
   The function attempt to cast the returned result to the type of the zeroth settable passed in,
   falling back to a set if it fails'''
-
   # https://softhints.com/python-3-list-and-set-operations/  
   result = set(settables[0])
   if operator == '-':
@@ -246,30 +241,108 @@ def setIntersect(*settables): return setOperation('&', *settables) # return comm
 def setUnion(*settables): return setOperation('|', *settables) 
 def setSymmDiff(*settables): return setOperation('^', *settables) 
 
+def stringifyEach(iterable): return type(iterable)(str(x) for x in iterable)
 
+def stringifyJoin(iterable, joiner=',', prepend_append=''): 
+  '''Convert each element in iterable to string and then join with joiner (default is ',')
+  and if len(prepend_append) is:
+      0... nothing is prepended or appended
+      1... that char is both prepended and appended
+      2... prepend_append[0] is prepended, prepend_append[1] is appended
+    > 2... half of it (or half-1 if len is odd) is prepended and the second half is appended '''
+  if prepend_append:
+    if len(prepend_append) == 1:
+      return f"{prepend_append}{joiner.join(str(x) for x in iterable)}{prepend_append}" 
+    half_len = len(prepend_append) // 2
+    return f"{prepend_append[:half_len]}{joiner.join(str(x) for x in iterable)}{prepend_append[half_len:]}"
+  else: return f"{joiner.join(str(x) for x in iterable)}"
+  
 
+def appendAny(collection_ob, *items, append_string=False):
+  '''appendAny(collection_ob, *items, append_string=False)
+  appends each item in items to collection_ob, which can be any type that can
+  be converted a list (but not be a string unless append_string==True), and 
+  returns appended collection_ob in the type it was passed as. 
+  see https://stackoverflow.com/a/25101183'''
+  if isinstance(collection_ob, list): return collection_ob + list(items)
+  elif isinstance(collection_ob, str):
+    if not append_string: raise ValueError(f'Cannot append to string when append_string={append_string}')
+    return ''.join(list(collection_ob) + list(items))
+  return type(collection_ob)(list(collection_ob) + list(items))
 
+def prependAny(collection_ob, *items, prepend_string=False):
+  '''prependAny(collection_ob, *items, prepend_string=False)
+  prepends each item in items to collection_ob, which can be any type that can
+  be converted a list (but not be a string unless append_string==True), and 
+  returns appended collection_ob in the type it was passed as. 
+  see https://stackoverflow.com/a/25101183'''
+  if isinstance(collection_ob, list): return list(items) + collection_ob 
+  elif isinstance(collection_ob, str):
+    if not prepend_string: raise ValueError(f'Cannot prepend to string when prepend_string={prepend_string}')
+    return ''.join(list(items) + list(collection_ob))
+  return type(collection_ob)(list(items) + list(collection_ob))
 
-# def calling_scope_variable(name):
-#   frame = stack()[1][0]
-#   while name not in frame.f_locals:
-#     frame = frame.f_back
-#     if frame is None:
-#       return None
-#   return frame.f_locals[name]
+# from collections.abc import Sequence
+
+#....... Dictionary helpers ...................................................
+
+def tuplesToDict(*tuples, multival_type=list, to_dict=None):
+  if to_dict is None: to_dict = {}
+  if len(tuples)==1:
+    tuples = tuples[0]
+    # print(f'got a collection of tuples: {tuples}')
+  for k, *vals in tuples:
+    if k in to_dict.keys():
+      try: # print(f'attempting append key: {k}', end=' ')
+        to_dict[k] = appendAny(to_dict[k], *vals, append_string=False)
+      except: #print('Failed. attempting prepend', end=' ')
+        try: to_dict[k] = prependAny(to_dict[k], *vals, prepend_string=False)
+        except: # print('Failed. manually prepending...', end=' ')
+          to_dict[k] = [ to_dict[k], *vals ]
+        print('')
+    elif not vals: to_dict[k] = None
+    elif len(vals) == 1: # print(f'adding one element to new key: {k}')
+      to_dict[k] = vals[0]
+    else: # print(f'adding multiple elements to new key: {k}')
+      to_dict[k] = multival_type(vals)
+  return to_dict
 
 
 #.......function/object/variable inspection ...................................
-
 
 
 def ppObj(ob):
   from yaml import dump as yaml_dump
   print(yaml_dump(ob))
 
-from inspect import getsource, stack # to see lambdify'd function definitions 
+from inspect import getsource, getmembers #, stack 
 
-def showdef(fn) : print(getsource(fn))
+
+
+def showdef(fn) : print(getsource(fn)) # use to see lambdify'd function definitions 
+
+# def membersListOfDict(obj):
+#   members = getmembers(obj)
+#   lofd = []
+#   for idx, member in enumerate(members):
+#     # remove "<" at start and "'>" at end then split at first space
+#     type_of_type, *fulltype = f'{member[1]}'[1:-2].split(" ", 1) 
+#     if fulltype: fulltype = fulltype[0]
+#     else: 
+#       fulltype
+      
+#       fulltype=f'{type(member[1]).__module__}.{type(member[1]).__name__}'
+#       print(f'no space in members[{idx}]')
+
+#     "class 'sympy.calculus.accumulationbounds.AccumulationBounds"
+#     type
+
+
+# import sympy
+# sympy.sign
+# sympy.core.function.FunctionClass
+
+
 
 # # from https://stackoverflow.com/a/18425523
 # import inspect 
@@ -282,34 +355,11 @@ def instanceof(*args):
   else: return isinstance(args[0], tuple(args[1:]))
 
 def classof(*args): 
-  # with 1 arg: returns string of class name 
-  # with 2 args: returns true of class name of arg 1 is arg 2 (string)
-  # with > 2 args: returns true of class name of arg 1 is any subsequent arg (strings)
+  '''with 1 arg: returns string of class name 
+  with 2 args: returns true of class name of arg 1 is arg 2 (string)
+  with > 2 args: returns true of class name of arg 1 is any subsequent arg (strings)'''
   if len(args) == 1: return args[0].__class__.__name__
   else: return True if args[0].__class__.__name__ in args[1:] else False
-
-def testScope():
-  def testTestScope(which_one):
-    caller_var="just for me"
-    return 'caller_var' in testScope()[which_one]
-  
-  g_list = list(globals().keys())
-  l_list = list(locals().keys())
-  v_list = list(vars().keys())
-  d_list = dir()
-  all_are_equal = sameElements(d_list, g_list, l_list, v_list)
-  intersection = setIntersect(d_list, g_list, l_list, v_list)
-  dir_only     = setDiff(d_list, g_list, l_list, v_list)
-  globals_only = setDiff(g_list, d_list, l_list, v_list)
-  locals_only  = setDiff(l_list, d_list, g_list, v_list)
-  vars_only    = setDiff(v_list, d_list, g_list, l_list)
-
-  return {
-    'dir':d_list, 'globals':g_list, 'locals':l_list, 'vars':v_list, 
-    'all_are_equal':all_are_equal, 'intersection':intersection, 'dir_only':dir_only, 
-    'globals_only':globals_only, 'locals_only':locals_only, 'vars_only':vars_only
-  }
-
 
 def zerothDictKey(d):
   if not d or not isinstance(d, dict): return {}  # if the dict is empty return an empty dict (empty dicts are not valid keys)
@@ -336,8 +386,7 @@ def classFromName(name):
   (which is same format that fullnameFromClass returns, i.e. 'module.submodule.class')
   and returns the class itself. The function still works even if module is not imported
   if the fullname is given, but it must be available to be imported, of course.
-  It will not work if the short class name is given but is not imported.
-  '''
+  It will not work if the short class name is given but is not imported.'''
   from sys import modules as sys_modules
 
   before_last_dot, *after_last_dot = name.rsplit('.', 1) # before_last_dot, ['class'] or []
@@ -419,6 +468,8 @@ def zerothLeafDictKey(d):
   return key
 
 
+# def moduleClasses(): pass
+
 '''
 NOTE: on dir(), locals(), vars() and globals()
 if without args...
@@ -440,13 +491,15 @@ def attrs( # formerly dictionizeAtts
     recurse_types=[], max_depth=1, 
     attributes_dict={}, depth=0 # args used by function for recursion
   ):
-  '''attrs(obj) returns a dict: values are arrays of attribute names in the object and the keys are the type of all the elements therein
+  '''NOTE: THIS FUNCTION IS KIND OF A MESS SO USE IT AT YOUR OWN PERLIL
+  attrs(obj) returns a dict: values are arrays of attribute names in the object and the keys are the type of all the elements therein
   You may also pass:
     not_types=[<typenames...>]     # to blacklist 
       OR
     types=[<typenames...>]         # to whitelist
     recurse_types=[<typenames...>] # types to recurse BUT RECURSION DOES NOT WORK WELL RIGHT NOW
     max_depth=4                    # the maximum depth of recursion
+    
   '''
 
   depth += 1
@@ -480,6 +533,7 @@ def attrs( # formerly dictionizeAtts
         attributes_dict[type_key].append(attribute)
 
   return attributes_dict
+
 
 
 import sympy as sp

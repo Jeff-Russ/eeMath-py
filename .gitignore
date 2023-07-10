@@ -4,6 +4,7 @@ shell_helpers.py
 filters.py
 eeOperators.py
 VToI.py
+scratchcode.py
 
 
 #### PYTHON.GITIGNORE (github.com/github/gitignore->Python.gitignore) #########
