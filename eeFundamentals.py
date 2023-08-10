@@ -3,15 +3,40 @@ import sympy as sp
 # import matplotlib.pyplot as plt
 # from numbers import Number
 
+from sympy.parsing.latex import parse_latex
+from eeMath.math_helpers import lambdifier
 
-from eeMath.eeSymbols import V, I, R
+
+from eeMath.eeSymbols import V, I, R, R_IN, R_GND,v_in, v_out, V_pull, R_pull
 
 ohmslaw_V_eq = sp.Eq(V, I*R)
 ohmslaw_I_eq = sp.Eq(I, sp.solve(ohmslaw_V_eq, I)[0])
 ohmslaw_R_eq = sp.Eq(R, sp.solve(ohmslaw_V_eq, R)[0])
 
 
+with sp.evaluate(False):
+  vdiv_out_eq = sp.Eq(v_out, v_in * (R_GND/(R_IN + R_GND)))
+
+vdiv_R_IN_eq = sp.Eq(R_IN, sp.solve(vdiv_out_eq, R_IN)[0])
+vdiv_v_in_eq = sp.Eq(v_in, sp.solve(vdiv_out_eq, v_in)[0])
+vdiv_R_GND_eq = sp.Eq(R_GND, sp.solve(vdiv_out_eq, R_GND)[0])
+
+# this could/should be made generic: a lambdifier option that does the pre-solve for you
+def mkfuncVDivSolver(solve_for, *required_symbol_args, **symbol_with_defaults):
+  '''examples:
+    vdivRin = mkfuncVDivSolver(R_IN, v_out, v_in=5, R_GND=10000)
+  vdivRin is then equivalent to:
+    def vdivRin(Vout, Vin=5, R2=10000): return ( ( Vin - Vout ) * R2 ) / Vout
+    
+  '''
+  expr = sp.solve(vdiv_out_eq, solve_for)[0]
+  return lambdifier(expr, *required_symbol_args, **symbol_with_defaults)
+
+# def vdivRin(Vout, Vin=5, R2=10000): return ( ( Vin - Vout ) * R2 ) / Vout
+
+
 def resistorJunctionVoltage(*Vn_Rn_tuples, exact=False, evaluate=False):
+  # test: resistorJunctionVoltage((v_out, 33*kΩ),(0, 27*kΩ),(5,27*kΩ))
   # Each arg is a 2-tuple of voltage and resistance, 
   # where either can be a number, a symbol or a string of a symbol
   # DEMO: https://tinyurl.com/2e6aa5o5
@@ -20,33 +45,40 @@ def resistorJunctionVoltage(*Vn_Rn_tuples, exact=False, evaluate=False):
   # TODO: prevent division to evaluation of division irrationals: I tried sp.Rational but you can't use that with sp.parse_expr
   #  UPDATE: Workaround: place the assignment using `sp.parse_expr` inside a `with sp.evaluate(False):` block.
   # TODO: maybe return newly created symbols?
-  numerator=[]   # each is Vn/Rn, which will all be added to form the numerator
-  denominator=[] # each is 1/Rn, which will all be added to form the denominator
+  numerator = 0   # sum of each Vn/Rn
+  denominator = 0 # sum of each 1/Rn
   new_symbols={}
   for Vn, Rn in Vn_Rn_tuples:
-    if Vn.__class__.__name__ == 'Symbol': v = Vn.name
+    # if isinstance(Vn, sp.Basic): V = Vn
+    if isinstance(Vn, str): new_symbols[Vn] = Vn = sp.symbols(Vn, real=True, finite=True)
+    if isinstance(Rn, str): new_symbols[Rn] = Rn = sp.symbols(Rn, real=True, finite=True)
+
+
+    if isinstance(Rn, sp.Basic):
+      numerator += Vn / Rn
+      denominator += 1 / Rn
+    elif isinstance(Vn, sp.Basic):
+      numerator += Vn / Rn
+      denominator += sp.Rational(1, Rn)
     else:
-      V=Vn
-      if isinstance(Vn, str): new_symbols[Vn] = sp.symbols(Vn, real=True, finite=True)
-    if Rn.__class__.__name__ == 'Symbol' : R = Rn.name
-    else:
-      R=Rn
-      if isinstance(Rn, str): new_symbols[Rn] = sp.symbols(Rn, real=True, nonnegative=True)
-    numerator.append( f'{V} / {R}' )
-    denominator.append( f'1 / {R}' )
-  numerator   = ' + '.join(numerator)
-  denominator = ' + '.join(denominator)
-  if evaluate: V_expression = sp.parse_expr(f'( {numerator} ) / ( {denominator} ) ')
+      numerator += sp.Rational(Vn, Rn)
+      denominator += sp.Rational(1, Rn)
+
+  if evaluate:
+    V_expression = numerator / denominator
   else:
     with sp.evaluate(False):
-      V_expression = sp.parse_expr(f'( {numerator} ) / ( {denominator} ) ')
+      V_expression = numerator / denominator
     
   solution = V_expression.evalf()
   if not exact and solution.is_number : 
-    return solution, new_symbols
+    if new_symbols: return solution, new_symbols
+    else: return solution
   else:
-    return V_expression, new_symbols
+    if new_symbols: return V_expression, new_symbols
+    else: return solution
 
+RJunctV = resistorJunctionVoltage
 
 def parallelR(*R_tuple):
   if len(R_tuple) == 2: 
