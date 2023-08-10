@@ -1,3 +1,8 @@
+prefix_order = [
+  'q', 'r', 'y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', 'c', 'd', 
+  'da', 'h', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'R', 'Q'
+]
+# TODO: just make metric_prefixes an OrderedDict ya dummy!
 metric_prefixes = {
   'q': 1e-30, # quecto 0.000000000000000000000000000001
   'r': 1e-27, # ronto 0.000000000000000000000000001
@@ -24,10 +29,41 @@ metric_prefixes = {
   'R': 1e27,  # ronna 1000000000000000000000000000
   'Q': 1e30,  # quetta 1000000000000000000000000000000
 }
-prefix_order = [
-  'q', 'r', 'y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', 'c', 'd', 
-  'da', 'h', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'R', 'Q'
-]
+# TODO: also this: https://stackoverflow.com/questions/31906377/sympy-and-units-for-electric-systems
+
+def getUnits(*units): # NOTE: destructuring fails when only getting one unit.
+  '''example: getUnits('pA nA') or getUnits('pA,nA') or getUnits('pA','nA')
+  The first letter of each unit requested should be a key in metric_prefixes (or starts 
+  with 'da' for a 'deci' unit). You can add whatever you want after this unit prefix:
+  they'll be ignored by this function by you'll likely use them in the variable names you unpack
+  the return to. if a unit is not recognized, 1 is return for that unit making this valid:
+    pA, nA, A = getUnits('pA, nA, A')'''
+  returns = []
+  from re import split as re_split
+  units =  [x for x in re_split(',[ ]*|[ ]+', ','.join(units)) if x.strip()] # the list compr. is to remove all-whitespace els
+  for unit in units:
+    if unit.startswith('da'): returns.append(metric_prefixes['da'])
+    elif unit[0] in metric_prefixes: returns.append(metric_prefixes[unit[0]])
+    else: returns.append(1)
+  return tuple(returns)
+
+########## MAKE SOME GLOBALS ######################################################################
+
+
+# Current:
+pA, nA, uA, mA = getUnits('pA, nA uA, mA')
+µA = uA
+
+# Capacitance:
+pF, nF, uF = getUnits('pF, nF, uF')
+
+# Resistance:
+mΩ, Ω, kΩ, MΩ = getUnits('mΩ, Ω, kΩ, MΩ')
+
+# Voltage:
+uV, mV = getUnits('uV, mV')
+µV = uV
+
 
 def generateMetricPrefixesFor(unit_name, min='p', max='G', skip_min='c', skip_max='h' ):
   '''
@@ -68,4 +104,4 @@ def generateMetricPrefixesFor(unit_name, min='p', max='G', skip_min='c', skip_ma
 # generateMetricPrefixesFor('V', min='p', max='k') 
 # # usage: 1.4kmv
 
-# also this: https://stackoverflow.com/questions/31906377/sympy-and-units-for-electric-systems
+

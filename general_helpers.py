@@ -31,6 +31,9 @@ def printlToStr(*args, **kwargs):
   kwargs['end'] = ''
   return printToStr(*args, **kwargs)
 
+def strReplaceEach(s, replace_k_with_v={}):
+  for k_replace, v_with in replace_k_with_v.items(): s = s.replace(k_replace, v_with)
+  return s
 
 #.......iterators/list/set/collections helpers .......................................
 
