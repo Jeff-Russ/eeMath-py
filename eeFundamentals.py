@@ -5,6 +5,7 @@ import sympy as sp
 
 from sympy.parsing.latex import parse_latex
 from eeMath.math_helpers import lambdifier
+from eeMath.discrete import bitmaskList
 
 
 from eeMath.eeSymbols import V, I, R, R_IN, R_GND,v_in, v_out, V_pull, R_pull
@@ -104,4 +105,21 @@ llR=parallelR # an alias for easier typing
 #     product *= number
 #   return product
 
-
+def parallelRPermutations(resistor_values, lsb_last=False, inv=False):
+  '''Output is list of all permutations of parallel resistances from any
+  (or all) of the resistor_values list. The output list size is: 
+    2**len(resistor_values) - 1  elements
+    (minus 1 because the state with no resistors is skipped)
+  lsb_last (default=False) (2rd arg) If this is set to 
+    True, the first resistance in the return all resistances
+    in parallel, if False, it only one resistor. 
+  inv (default=False) (3rd arg) Set this to True if resistor outputs
+    are active-LOW (enbled by LOW rather than HIGH)
+  '''
+  results = []
+  for bint in range(1, 2**len(resistor_values)):
+    active_parallel_resitors = bitmaskList(bint, resistor_values, lsb_last, inv)
+    if active_parallel_resitors:
+      results.append(llR(*active_parallel_resitors))
+    # results.append(active_parallel_resitors)
+  return results

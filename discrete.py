@@ -96,6 +96,14 @@ def weave(*iterables, allow_gaps=True, gap_fill=None):
   return weaved
 
 
+def yValsToCoords(y_vals, x0=0, x_step=1):
+  l_of_tups = [] 
+  x = x0
+  for y in y_vals:
+    l_of_tups.append( (x, y) )
+    x += x_step
+  return l_of_tups
+
 
 def interpCoords(coordinates_or_sorted_x_vals, corresponding_y_vals=None, spline_degree=1, x=None, show_plot=False):
   '''interpCoords(coordinates_or_sorted_x_vals, corresponding_y_vals=None, spline_degree=1, x=None, show_plot=False)
@@ -157,3 +165,36 @@ def interpCoords(coordinates_or_sorted_x_vals, corresponding_y_vals=None, spline
     if show_plot == 'and return': return s
   else: 
     return s
+
+
+
+def bitflipUInt(uint, bit_len):
+  mask = eval(f'0b{"1"*bit_len}')
+  return ~uint & mask
+
+def bitmaskList(bitmask_int, bit_vals, lsb_last=False, inv=False):
+  '''takes a non-negative bitmask_int, splits it into bits
+  and returns a sublist of a provides list of bit_vals
+  where each returned element is an ON bit from provided
+  non-negative bitmask_int.
+  lsb_last (default=False) (3rd arg) If this is set to 
+    True, the LSB in bitmask_int corresponds to the 
+    last element of bit_vals rather than the zeroth.
+  inv (default=False) (4th arg) If True,
+    each returned element is an OFF bit in bitmask_int.
+  Examples:
+    bitmaskList(2, [-1, -2])       # [-2]
+    bitmaskList(2, [-1, -2], True) # [-1]
+    bitmaskList(0b101, [1, 2, 3])  # [1, 3]
+    bitmaskList(0b00, [1, 2, 3])   # []
+    bitmaskList(0b101, [1, 2, 3], inv=True) # [2]
+  '''
+  if inv: bitmask_int = bitflipUInt(bitmask_int, len(bit_vals))
+  from itertools import compress  # lst_els_true_in_bools = compress(lst, bools) ...
+  # but it also works if the bools list is integers, but not if bools is a string...
+  # So, first convert to list of string integers. Below, the [2:] is to shave off '0b'
+  # at start of string bool and the zfill pads 0's on left so len matches bit_vals:
+  ibool_lst = list(bin(bitmask_int)[2:].zfill(len(bit_vals))) 
+  ibool_lst = list(map(int, ibool_lst)) # then convert to list of integers.
+  if not lsb_last: ibool_lst.reverse() # reverse if lsb is last
+  return list(compress(bit_vals, ibool_lst)) 
