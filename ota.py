@@ -1,9 +1,9 @@
 import sympy as sp
 from eeMath.math_helpers import lambdifier
 
-from eeMath.eeSymbols import V_T, v_in, v_p, v_n, i_abc, i_out, v_out, R_out
+from eeMath.eeSymbols import V_T, v_in, v_p, v_m, i_abc, i_out, v_out, R_out
 # About the above:
-# - v_p and v_n are the V+ and V- OTA inputs, we'll use v_in as V+ when v_n is grounded (0)
+# - v_p and v_m are the V+ and V- OTA inputs, we'll use v_in as V+ when v_m is grounded (0)
 # - V_T is "thermal voltage" a property of BJT's (in OTA), which  changes with temperature so 
 #       V_T ≈ 25mV @ 20°C, and V_T ≈ 26mV @ 25°C
 # - i_abc is the OTA control pin aka i_con
@@ -11,13 +11,13 @@ from eeMath.eeSymbols import V_T, v_in, v_p, v_n, i_abc, i_out, v_out, R_out
 # R_out resistor pulls the the OTA output to a voltage (typically it's tied to GND)
 
 with sp.evaluate(False): 
-  ideal_ota_i_out = (i_abc / (2 * V_T)) * (v_p - v_n)
+  ideal_ota_i_out = (i_abc / (2 * V_T)) * (v_p - v_m)
   ideal_ota_v_out = R_out * ideal_ota_i_out
 
 # if we didn't care to ever change V_T, we'd replace the above with:
 '''
 with sp.evaluate(False): 
-  ideal_ota_i_out = (i_abc / (2 * sp.Rational(5, 192))) * (v_p - v_n)
+  ideal_ota_i_out = (i_abc / (2 * sp.Rational(5, 192))) * (v_p - v_m)
   ideal_ota_v_out = R_out * ideal_ota_i_out
 '''
 
@@ -26,8 +26,8 @@ V_T_approx = sp.Rational(5, 192)  # V_T_approx is close to 26mV but is exactly t
 # which I got by sp.Eq(19.2, 1/(2*x)) and then solving for x)
 
 # These might not work?....
-idealOtaIout = lambdifier(ideal_ota_i_out, i_abc, v_p, v_n=0, V_T=V_T_approx)
-idealOtaVout = lambdifier(ideal_ota_v_out, R_out, i_abc, v_p, v_n=0, V_T=V_T_approx)
+idealOtaIout = lambdifier(ideal_ota_i_out, i_abc, v_p, v_m=0, V_T=V_T_approx)
+idealOtaVout = lambdifier(ideal_ota_v_out, R_out, i_abc, v_p, v_m=0, V_T=V_T_approx)
 
 
 def OTArecalibrateFrom_V_T(V_T_value=None) : 
