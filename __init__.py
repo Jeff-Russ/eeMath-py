@@ -16,7 +16,7 @@ from importlib import reload
 # if eeMathLib_path not in sys_path:
 #   sys_path.append('/Users/jeffreyruss/Desktop/EE 2023/ python_math (for circuits)')
 
-# __all__ = [ 'helpers', 'fs', 'eeFundamentals', 'opamp', 'note_frequency' ]
+# __all__ = [ 'helpers', 'fs', 'eeFundamentals', 'opamp', 'freq_and_time' ]
 
 from eeMath.bjt import *
 from eeMath.discrete import *
@@ -27,7 +27,7 @@ from eeMath.eeSymbols import *
 from eeMath.general_helpers import *
 from eeMath.graphing import *
 from eeMath.math_helpers import *
-from eeMath.note_frequency import *
+from eeMath.freq_and_time import *
 from eeMath.opamp import *
 from eeMath.ota  import *
 # from eeMath.shell_helpers import *
