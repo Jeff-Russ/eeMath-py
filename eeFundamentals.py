@@ -105,21 +105,26 @@ llR=parallelR # an alias for easier typing
 #     product *= number
 #   return product
 
-def parallelRPermutations(resistor_values, lsb_last=False, inv=False):
+def parallelRPermutations(resistor_values, always_parallel_R=None, lsb_last=False, inv=False):
   '''Output is list of all permutations of parallel resistances from any
   (or all) of the resistor_values list. The output list size is: 
     2**len(resistor_values) - 1  elements
     (minus 1 because the state with no resistors is skipped)
-  lsb_last (default=False) (2rd arg) If this is set to 
+  always_parallel_R (2nd arg), if provided, specifies a resistance that is always in
+  in parallel with the circuit no matter what state (permutation).
+  lsb_last (default=False) (3rd arg) If this is set to 
     True, the first resistance in the return all resistances
     in parallel, if False, it only one resistor. 
-  inv (default=False) (3rd arg) Set this to True if resistor outputs
+  inv (default=False) (4th arg) Set this to True if resistor outputs
     are active-LOW (enbled by LOW rather than HIGH)
   '''
   results = []
   for bint in range(1, 2**len(resistor_values)):
     active_parallel_resitors = bitmaskList(bint, resistor_values, lsb_last, inv)
     if active_parallel_resitors:
-      results.append(llR(*active_parallel_resitors))
+      if always_parallel_R:
+        results.append(llR(*active_parallel_resitors, always_parallel_R))
+      else:
+        results.append(llR(*active_parallel_resitors))
     # results.append(active_parallel_resitors)
   return results

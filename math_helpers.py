@@ -5,6 +5,13 @@ import sympy as sp
 
 ###### MATH HELPERS ###############################################################################
 
+#....... Boolean functions ...................................................
+
+def equalExprs(*exprs):
+  expr0 = sp.simplify(exprs[0])
+  for i in range(1, len(exprs)):
+    if expr0 - sp.simplify(exprs[i]) != 0: return False
+  return True
 
 #....... solve, calc ..........................................................
 
