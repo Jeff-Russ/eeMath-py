@@ -47,6 +47,14 @@ def getUnits(*units): # NOTE: destructuring fails when only getting one unit.
     else: returns.append(1)
   return tuple(returns)
 
+
+def unit(*units):
+  u = getUnits(*units)
+  if len(u) > 1: raise ValueError('unit recieved more than one unit!')
+  return u[0]
+
+getUnit = unit
+
 ########## MAKE SOME GLOBALS ######################################################################
 
 
@@ -64,6 +72,10 @@ mΩ, Ω, kΩ, MΩ = getUnits('mΩ, Ω, kΩ, MΩ')
 uV, mV = getUnits('uV, mV')
 µV = uV
 
+
+# Time:
+us, ms = getUnits('us, ms')
+µs = us
 
 def generateMetricPrefixesFor(unit_name, min='p', max='G', skip_min='c', skip_max='h' ):
   '''

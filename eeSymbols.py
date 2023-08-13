@@ -33,8 +33,8 @@ from re import split as re_split
 from collections import OrderedDict
 
 
-@func_attr(latex='auto', force_subscript=True,force_subscript_warning=True, hist=OrderedDict())
-def symbs(string_names, *, replace_each={}, latex=None, force_subscript=None, force_subscript_warning=None, hist_attrs={}, cls=Symbol, **kwargs):
+@func_attr(latexify='auto', force_subscript=True,force_subscript_warning=False, hist=OrderedDict())
+def symbs(string_names, *, replace_each={}, latexify=None, force_subscript=None, force_subscript_warning=None, hist_attrs={}, cls=Symbol, **kwargs):
   '''
   Use this in place of symbols/Symbol to make Symbol object since this function let you pass in the
   string representations that are the same at the variable names, automatically converting them to latex
@@ -52,16 +52,16 @@ def symbs(string_names, *, replace_each={}, latex=None, force_subscript=None, fo
   '''
   # test with: symbs('R R1 R_2 Rvb R_v_m R_v_mf')
   # should error: symbs('R1 R_1')
-  if latex is not None:
-    symbs.latex = latex
+  if latexify is not None:
+    symbs.latexify = latexify
     if force_subscript is not None: symbs.force_subscript = force_subscript
     if force_subscript_warning is not None: symbs.force_subscript_warning = force_subscript_warning
   
-  if not symbs.latex:
+  if not symbs.latexify:
     if force_subscript is not None: 
-      print(f'Warning: ignoring force_subscript={force_subscript} because symb.latex={symbs.latex}')
+      print(f'Warning: ignoring force_subscript={force_subscript} because symb.latexify={symbs.latexify}')
     if force_subscript_warning is not None:
-      print(f'Warning: ignoring force_subscript_warning={force_subscript_warning} because symb.latex={symbs.latex}')
+      print(f'Warning: ignoring force_subscript_warning={force_subscript_warning} because symb.latexify={symbs.latexify}')
 
   kwargs['cls'] = cls
 
@@ -72,10 +72,10 @@ def symbs(string_names, *, replace_each={}, latex=None, force_subscript=None, fo
   hist_update = OrderedDict()
   hist_attrs['about'] = str(hist_attrs['about']) if 'about' in hist_attrs else '' # about:str is a required attribute for symbs
 
-  if symbs.latex:
+  if symbs.latexify:
     varnames = symbnames
     for i in range(len(varnames)):
-      if symbs.latex != 'auto' or varnames[i].isidentifier():
+      if symbs.latexify != 'auto' or varnames[i].isidentifier():
         symbnames[i] = varnameToLaTeX(varnames[i], replace_each)
       elif replace_each: symbnames[i] = strReplaceEach(varnames[i], replace_each)
       # else: we already have symbnames[i] so leave it alone
@@ -151,12 +151,14 @@ V, I = symbols('V I', **real_finite)
 R, P_watts = symbols('R P_watts', **real_nonneg)
 
 # generic components 
-R_1, R_2, R_3, R_4, R_5, R_6, R_IN, R_in, R_GND, R_pull = symbs('R_1, R_2, R_3, R_4, R_5, R_6, R_IN, R_in, R_GND, R_pull', about='generic resistors', **real_nonneg)
-C_1, C_2, C_3, C_4, C_5 = symbs('C_1, C_2, C_3, C_4, C_5', about='generic capacitors', **real_nonneg)
-D_1, D_2, D_3, D_4 = symbs('D_1, D_2, D_3, D_4 ', about='generic diodes', **real_nonneg)
+R, R_1, R_2, R_3, R_4, R_5, R_6, R_IN, R_in, R_GND, R_pull = symbs('R, R_1, R_2, R_3, R_4, R_5, R_6, R_IN, R_in, R_GND, R_pull', about='generic resistors', **real_nonneg)
+C, C_1, C_2, C_3, C_4, C_5 = symbs('C, C_1, C_2, C_3, C_4, C_5', about='generic capacitors', **real_nonneg)
+D, D_1, D_2, D_3, D_4 = symbs('D, D_1, D_2, D_3, D_4 ', about='generic diodes', **real_nonneg)
 
 # generic voltages
 V_REF, V_pREF, V_nREF, V_pull = symbs('V_REF, V_pREF, V_nREF, V_pull', about='generic voltages', **real_finite)
+
+tau_1, tau_2, tau_3, tau_4, tau_5, tau_6, tau_7 = symbs('\tau_1, \tau_2, \tau_3, \tau_4, \tau_5, \tau_6, \tau_7', about='time constants', **real_finite)
 
 # for ota.py and opamp.py:
 v_p, v_m, i_abc, i_out, v_out = symbs('v_p, v_m, i_abc, i_out, v_out', about='states at chip pins (not via resistors)', **real_finite)
