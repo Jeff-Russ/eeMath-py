@@ -117,3 +117,26 @@ def generateMetricPrefixesFor(unit_name, min='p', max='G', skip_min='c', skip_ma
 # # usage: 1.4kmv
 
 
+def parseNum(str_or_num, prefer_int=True):
+  '''parse an integer or float string that may have an metric unit'''
+  if isinstance(str_or_num, int):
+    return str_or_num
+  if isinstance(str_or_num, float):
+    if prefer_int and str_or_num == int(str_or_num): return int(str_or_num)
+    else: return str_or_num
+  temp = None
+  if isinstance(str_or_num, str):
+    from re import search
+    temp = search(r'[a-zA-Z]', str_or_num)
+  if temp is not None:
+    idx = temp.start()
+    unit = str_or_num[idx]
+    # if unit == 'µ': unit = 'u' # TODO: does not work because not [a-zA-Z]
+    as_flt = float(str_or_num[:idx])
+    as_flt *= metric_prefixes[unit]
+  else:
+    as_flt = float(str_or_num)
+  as_int = int(as_flt) 
+  if prefer_int and as_int == as_flt: return as_int
+  else: return as_flt
+

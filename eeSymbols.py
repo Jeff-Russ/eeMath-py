@@ -50,8 +50,8 @@ def symbs(string_names, *, replace_each={}, latexify=None, force_subscript=None,
   3) Make laTeXToPy func which users can pass latex to in order to see python that would define it. 
   # NOTE: requires func_attr, printlToStr, strReplaceEach
   '''
-  # test with: symbs('R R1 R_2 Rvb R_v_m R_v_mf')
-  # should error: symbs('R1 R_1')
+  # test with: symbs('R R1 R2 Rvb R_v_m R_v_mf')
+  # should error: symbs('R1 R1')
   if latexify is not None:
     symbs.latexify = latexify
     if force_subscript is not None: symbs.force_subscript = force_subscript
@@ -151,14 +151,16 @@ V, I = symbols('V I', **real_finite)
 R, P_watts = symbols('R P_watts', **real_nonneg)
 
 # generic components 
-R, R_1, R_2, R_3, R_4, R_5, R_6, R_IN, R_in, R_GND, R_pull = symbs('R, R_1, R_2, R_3, R_4, R_5, R_6, R_IN, R_in, R_GND, R_pull', about='generic resistors', **real_nonneg)
-C, C_1, C_2, C_3, C_4, C_5 = symbs('C, C_1, C_2, C_3, C_4, C_5', about='generic capacitors', **real_nonneg)
-D, D_1, D_2, D_3, D_4 = symbs('D, D_1, D_2, D_3, D_4 ', about='generic diodes', **real_nonneg)
+R, R1, R2, R3, R4, R5, R6, R_IN, R_in, R_GND, R_pull = symbs('R, R1, R2, R3, R4, R5, R6, R_IN, R_in, R_GND, R_pull', about='generic resistors', **real_nonneg)
+C, C1, C2, C3, C4, C5 = symbs('C, C1, C2, C3, C4, C5', about='generic capacitors', **real_nonneg)
+D, D1, D2, D3, D4 = symbs('D, D1, D2, D3, D4 ', about='generic diodes', **real_nonneg)
 
 # generic voltages
 V_REF, V_pREF, V_nREF, V_pull = symbs('V_REF, V_pREF, V_nREF, V_pull', about='generic voltages', **real_finite)
 
-tau_1, tau_2, tau_3, tau_4, tau_5, tau_6, tau_7 = symbs('\tau_1, \tau_2, \tau_3, \tau_4, \tau_5, \tau_6, \tau_7', about='time constants', **real_finite)
+
+tau1, n_tau = symbs(r'{\tau_1}, {n_{\tau}}', about='time constants', **real_finite)
+
 
 # for ota.py and opamp.py:
 v_p, v_m, i_abc, i_out, v_out = symbs('v_p, v_m, i_abc, i_out, v_out', about='states at chip pins (not via resistors)', **real_finite)
