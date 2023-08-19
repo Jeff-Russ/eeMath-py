@@ -198,3 +198,6 @@ def bitmaskList(bitmask_int, bit_vals, lsb_last=False, inv=False):
   ibool_lst = list(map(int, ibool_lst)) # then convert to list of integers.
   if not lsb_last: ibool_lst.reverse() # reverse if lsb is last
   return list(compress(bit_vals, ibool_lst)) 
+
+def nBitBin(u_int, bits, prepend='0b'):
+  return f'{prepend}{bin(u_int)[2:].zfill(bits)}'

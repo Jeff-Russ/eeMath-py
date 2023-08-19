@@ -8,7 +8,7 @@ from eeMath.math_helpers import lambdifier
 from eeMath.discrete import bitmaskList
 
 
-from eeMath.eeSymbols import V, I, R, R_IN, R_GND,v_in, v_out, V_pull, R_pull
+from eeMath.eeSymbols import V, I, R, Rll, R_IN, R_GND,v_in, v_out, V_pull, R_pull
 
 ohmslaw_V_eq = sp.Eq(V, I*R)
 ohmslaw_I_eq = sp.Eq(I, sp.solve(ohmslaw_V_eq, I)[0])
@@ -91,6 +91,13 @@ def parallelR(*R_tuple):
     return 1 / denom
 
 llR=parallelR # an alias for easier typing
+
+def get_Rll_eq(Rll_sym_or_val, *R_tuple):
+  '''examples:
+  get_Rll_eq(Rll, R1, R2) # returns Eq(Rll, (R1*R2)/(R_1+R_2) )
+  solve(get_Rll_eq(500, 1_000, R2), R2)[0].evalf() # returns 1000'''
+  with sp.evaluate(False):
+    return sp.Eq(Rll_sym_or_val, parallelR(*R_tuple))
 
 # def IParallelR(*R_lst):
 #   subs = []

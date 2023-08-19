@@ -5,6 +5,7 @@ filters.py
 eeOperators.py
 VToI.py
 scratchcode.py
+midi_modified.py
 
 
 #### PYTHON.GITIGNORE (github.com/github/gitignore->Python.gitignore) #########

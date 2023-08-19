@@ -151,7 +151,7 @@ V, I = symbols('V I', **real_finite)
 R, P_watts = symbols('R P_watts', **real_nonneg)
 
 # generic components 
-R, R1, R2, R3, R4, R5, R6, R_IN, R_in, R_GND, R_pull = symbs('R, R1, R2, R3, R4, R5, R6, R_IN, R_in, R_GND, R_pull', about='generic resistors', **real_nonneg)
+R, R1, R2, R3, R4, R5, R6, Rll, R_IN, R_in, R_GND, R_pull = symbs('R, R1, R2, R3, R4, R5, R6, Rll, R_IN, R_in, R_GND, R_pull', about='generic resistors', **real_nonneg)
 C, C1, C2, C3, C4, C5 = symbs('C, C1, C2, C3, C4, C5', about='generic capacitors', **real_nonneg)
 D, D1, D2, D3, D4 = symbs('D, D1, D2, D3, D4 ', about='generic diodes', **real_nonneg)
 
