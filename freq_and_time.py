@@ -3,8 +3,77 @@ import sympy as sp
 # import matplotlib.pyplot as plt
 
 
-from eeMath.eeSymbols import R, C, n_midi, f_Hz
-from eeMath.units import getUnit
+from eeMath.eeSymbols import R, C, f_Hz, tau1, n_tau, n_midi
+from eeMath.units import getUnit, parseNum
+from eeMath.math_helpers import evalF
+
+
+#### TIME <> FREQUENCY CONVERSION ################################################################
+
+def periodOfHz(hz): return 1/hz # period, in seconds, from hertz
+sOfHz = periodOfHz
+
+def hzOfPeriod(seconds): return 1/seconds
+hzOfS = hzOfPeriod
+
+def msOfHz(hz): return 1000/hz # period, in milliseconds, from hertz
+
+
+#### RC CIRCUITS #################################################################################
+
+tau1_of_RC_eq = sp.Eq(tau1, R * C) 
+
+def valOfRCWithTau(R_or_C_val, tau_val, n_tau=1, exact=False): 
+  R_or_C_val = parseNum(R_or_C_val)
+  if n_tau != 1: tau_val /= n_tau
+  
+  sol = sp.solve(tau1_of_RC_eq.subs({R: R_or_C_val, tau1: tau_val}), C)
+  if not sol: return sol
+  if exact:
+    if len(sol) == 1: return sol[0]
+    else: return sol
+  else:
+    return sol[0].evalf()
+
+f_Hz_of_RC_at_n_tau_eq = sp.Eq( f_Hz, 1/(R * C * n_tau) )
+
+# C_val = sp.solve(eq.subs({f_Hz:8.175798915643707, n_tau:DCO_tc_span, R: max_R}) )[0].evalf()
+
+def valOfRCWithHz(R_or_C_val, f_hz, n_taus=1, exact=False): 
+  R_or_C_val = parseNum(R_or_C_val)
+  sol = sp.solve(f_Hz_of_RC_at_n_tau_eq.subs({f_Hz:f_hz, R: R_or_C_val, n_tau: n_taus}), C)
+  if not sol: return sol
+  if len(sol) == 1: 
+    if exact: return sol[0]
+    else: return parseNum(sol[0])
+  else: return sol
+
+def hzOfRC(R_val, C_val, n_taus=1, exact=False):
+  R_val = parseNum(R_val)
+  C_val = parseNum(C_val)
+  sol = sp.solve(f_Hz_of_RC_at_n_tau_eq.subs({R:R_val, C:C_val, n_tau: n_taus}), f_Hz)
+  if not sol: return sol
+  if len(sol) == 1: 
+    if exact: return sol[0]
+    else: return parseNum(sol[0])
+  else: return sol
+
+def infoOnRC(R_val, C_val, forTau=[1,3,5]):
+  from math import pi
+  from re import search
+  R_val =  parseNum(R_val)
+  C_val = parseNum(C_val)
+  t_const = R_val * C_val
+  f_cut = 1 / (2 * pi * t_const)
+  ret = {'R':R_val, 'C':C_val, 't_const':t_const, 'f_cut':f_cut}
+  for tc in forTau:
+    ms = t_const * tc * 1000
+    hz = 1 / (t_const * tc)
+    ret[f'atTau{tc}'] = { 'ms':ms, 'hz':hz }
+  return ret
+
+#### MIDI NOTE FREQUENCY ##########################################################################
+
 
 with sp.evaluate(False):
   f_Hz_of_n_midi_eq = sp.Eq(f_Hz, 440 * 2**((n_midi-69)/12))
@@ -29,16 +98,6 @@ def midiOfHz(hz, exact=False):
     from math import log as ln
     return ((12 * ln(hz / 440)) / ln(2)) + 69
 
-def msOfHz(hz): return 1000/hz # period, in milliseconds, from hertz
-
-def periodOfHz(hz): return 1/hz # period, in seconds, from hertz
-
-# def hzOfPeriod(seconds): return 1/seconds
-
-# def msOfms(ms): return 1000/ms
-
-sOfHz = periodOfHz
-
 def periodOfMidi(note, exact=False, unit='s'):
   if unit == 's': unit = 1
   else: unit = getUnit(unit)
@@ -52,7 +111,4 @@ def periodOfMidi(note, exact=False, unit='s'):
   else:
     return 1 / hz / unit
 
-# 8-bit MIDI: my invention, where lower "notes" are added, which are actually for LFOs/Envelopes
-# in this 8-bit, notes 128 to 255 result in what notes 0 to 127 result in with 7-bit.
 
-midi8def440 = 197
