@@ -18,7 +18,7 @@ from importlib import reload
 
 # __all__ = [ 'helpers', 'fs', 'eeFundamentals', 'opamp', 'freq_and_time' ]
 
-from eeMath.bjt import *
+
 from eeMath.discrete import *
 from eeMath.eeFundamentals import *
 # from eeMath.eeOperators import *
@@ -27,7 +27,9 @@ from eeMath.eeSymbols import *
 from eeMath.general_helpers import *
 from eeMath.graphing import *
 from eeMath.math_helpers import *
+from eeMath.thermal import *
 from eeMath.freq_and_time import *
+from eeMath.bjt import *
 from eeMath.opamp import *
 from eeMath.ota  import *
 # from eeMath.shell_helpers import *
@@ -37,4 +39,4 @@ from eeMath.units import *
 
 from pathlib import Path
 
-sp.init_printing(use_unicode=False) # for LaTeX output
+# sp.init_printing(use_unicode=False) # for LaTeX output
