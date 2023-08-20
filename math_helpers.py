@@ -5,6 +5,81 @@ import sympy as sp
 
 ###### MATH HELPERS ###############################################################################
 
+from eeMath.eeSymbols import symbs
+
+
+def subs(expr_or_eq=None, subs={}, persist=False):
+  '''1) Normal mode of operation:
+    subs(expr_or_eq)            # returns expr_or_eq.subs(symbs.subs)
+    subs(expr_or_eq, subs_dict) # returns expr_or_eq.subs({**symbs.subs, **subs_dict})
+    subs(expr_or_eq, subs_dict, persist=True) # same, but sets symbs.subs = {**symbs.subs, **subs_dict}
+  
+  2) Modes to set/get symbol subs defaults (all return symbs.subs or some subset of it)
+    subs()                            # returns entire dictionary of symbols, whether set to a default or to self (no default)
+    subs(set_of_symbols)              # returns dictionary, but only entires whose key is in set_of_symbols. Intended usage:
+                                      # subs(expr_or_eq.free_symbols)
+    subs('defaults')                  # return default dict (symbs.subs that define substitutions with defaults)
+    subs('defaults', set_of_symbols)  # returns defaults dict but only entries with keys in set_of_symbols. Intended usage:
+                                      # subs('get', expr_or_eq.free_symbols)
+    subs('set', subs_dict)            # adds (persists) subs_dict entries to subs.default before returning it 
+    subs('clear')                     # disables subsitutions for all symbols by setting each in symbs.subs to itself.
+    subs('clear', subs_dict)          # same but also adds new subs entries
+    subs('clear', set_of_symbols)     # the same as previous, but only for symbols in set_of_symbols. Intended usage:
+                                      # subs('clear', expr_or_eq.free_symbols)
+  '''
+  global symbs
+
+  if   expr_or_eq is None: return symbs.subs
+  elif isinstance(expr_or_eq, (set, list, tuple)):
+    return { k:v for (k,v) in symbs.subs.items() if k in expr_or_eq } 
+
+  if isinstance(expr_or_eq, str):
+    # also_include = []
+    if expr_or_eq == 'clear':
+      if subs:
+        if isinstance(subs, dict):                 # clear, then set
+          symbs.subs = {**{symb:symb for symb in symbs.subs}, **subs}
+          # also_include = subs.keys() # we'll return those with defaults + those set
+
+        elif isinstance(subs, (set, list, tuple)): # clear specified only
+          for symb in subs: symbs.subs[symb] = symb
+          # also_include = subs # we'll return those with defaults + those specified
+
+        else: print(f'Warning: cannot clear defaults with {type(subs)} object provided as second argument')
+      else:
+        symbs.subs = { symb:symb for symb in symbs.subs }
+      
+    elif expr_or_eq == 'set':
+      if subs:
+        if isinstance(subs, dict):              # set
+          symbs.subs = {**symbs.subs, **subs}
+          # also_include = subs.keys() # we'll return those with defaults + those specified
+
+        else: print(f'Warning: cannot set defaults using {type(subs)} object')
+      else:
+        print(f'Warning: cannot set defaults without second argument!')
+
+    elif expr_or_eq == 'defaults':
+      if subs and isinstance(subs, (set, list, tuple)): # show defaults for specified
+        return { k:v for (k,v) in symbs.subs.items() if k != v and k in subs } 
+    
+    else: print(f'Warning: unknown option {expr_or_eq} to subs()')
+    
+    # return a copy of symbs.subs only containing entries whose keys do not equal values;
+    # return { k:v for (k,v) in symbs.subs.items() if k != v or k in also_include} 
+    return { k:v for (k,v) in symbs.subs.items() if k != v} 
+  
+  unidentified_keys = subs.keys() - expr_or_eq.free_symbols
+  if unidentified_keys: 
+    raise ValueError(f'The following subsitutions are for unknown symbols: {unidentified_keys}')
+  
+  merged_subs = {**symbs.subs, **subs} 
+  result = expr_or_eq.subs(merged_subs)
+
+  if persist:
+    symbs.subs = {**symbs.subs, **subs}
+  return result
+
 #....... Boolean functions ...................................................
 
 def equalExprs(*exprs):
@@ -193,6 +268,11 @@ def ppMode(mode=None, **kwargs): # pretty print selection
     else: print(f'WARNING: ppMode got unknown option: {mode}')
   else: # defer to (forward keyword arguments to)   sp.init_printing
     sp.init_printing(**kwargs)
+
+
+def pp(thing, rm=r'({|})'):
+  from re import compile, sub
+  return print(sub(compile(rm), '', sp.pretty(thing, use_unicode=True)))
 
 #....... Fractional numbers and FP precision ..................................
 

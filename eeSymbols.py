@@ -33,7 +33,7 @@ from re import split as re_split
 from collections import OrderedDict
 
 
-@func_attr(latexify='auto', force_subscript=True,force_subscript_warning=False, hist=OrderedDict())
+@func_attr(latexify='auto', force_subscript=True,force_subscript_warning=False, hist=OrderedDict(), subs={})
 def symbs(string_names, *, replace_each={}, latexify=None, force_subscript=None, force_subscript_warning=None, hist_attrs={}, cls=Symbol, **kwargs):
   '''
   Use this in place of symbols/Symbol to make Symbol object since this function let you pass in the
@@ -93,7 +93,14 @@ def symbs(string_names, *, replace_each={}, latexify=None, force_subscript=None,
   # rather than modifying, delete any entries and re-add to bump their position up
   symbs.hist = OrderedDict({k: symbs.hist[k] for k in symbs.hist if k not in hist_update})
   symbs.hist.update(hist_update)
-  
+
+  # Append symbs.subs with new keys/values where both for each is the symbol to be returned.
+  # Unless specified otherwise later on, we set each to itself which disables substitions with subs()
+
+  if isinstance(symbs_tuple, tuple):
+    symbs.subs = {**symbs.subs, **{sym:sym for sym in symbs_tuple} }
+  elif isinstance(symbs_tuple, Symbol): symbs.subs[symbs_tuple] = symbs_tuple
+
   return symbs_tuple
 
 # def allSymbs(symb=None, show=[]):
@@ -146,9 +153,9 @@ real_finite = {'real':True, 'finite':True} # usage: symbols|symbs(st, **real_fin
 
 ########## GLOBAL SYMBOL DECLARATIONS #############################################################
 
-# eeOperators
-V, I = symbols('V I', **real_finite)
-R, P_watts = symbols('R P_watts', **real_nonneg)
+# generic values
+V, I = symbs('V I', about='generic values', **real_finite)
+R, P_watts = symbs('R P_watts', about='generic values', **real_nonneg)
 
 # generic components 
 R, R1, R2, R3, R4, R5, R6, Rll, R_IN, R_in, R_GND, R_pull = symbs('R, R1, R2, R3, R4, R5, R6, Rll, R_IN, R_in, R_GND, R_pull', about='generic resistors', **real_nonneg)
@@ -167,6 +174,8 @@ v_p, v_m, i_abc, i_out, v_out = symbs('v_p, v_m, i_abc, i_out, v_out', about='st
 v_in, v_mIn, v_pIn = symbs('v_in, v_mIn, v_pIn', about='voltage input to chip config, not chip pins (i.e. via resistors)', **real_finite )
 R_v_m, R_fb, R_nfb, R_pfb, R_out = symbs('R_v_m, R_fb R_nfb, R_pfb, R_out', **real_nonneg)
 
+
+i_out = symbs('i_out', **real_finite)
 
 # Note frequency:
 n_midi, f_Hz = symbs('n_midi, f_Hz', **real_finite)
