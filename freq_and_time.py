@@ -3,7 +3,7 @@ import sympy as sp
 # import matplotlib.pyplot as plt
 
 
-from eeMath.eeSymbols import R, C, f_Hz, tau1, n_tau, n_midi
+from eeMath.eeSymbols import R, C, f_Hz, tau1, n_tau, n_midi, p_cnt
 from eeMath.units import getUnit, parseNum
 from eeMath.math_helpers import evalF
 
@@ -21,7 +21,12 @@ def msOfHz(hz): return 1000/hz # period, in milliseconds, from hertz
 
 #### RC CIRCUITS #################################################################################
 
-tau1_of_RC_eq = sp.Eq(tau1, R * C) 
+tau1_of_RC_eq = sp.Eq(tau1, R * C) # tau1 means tau*1 so really just tau (in seconds)
+
+p_cnt_after_n_tau_eq =  sp.Eq(p_cnt, 1 - sp.exp(-n_tau))
+
+n_tau_of_p_cnt_eq = sp.Eq(n_tau, sp.log(-1/(p_cnt - 1)))
+
 
 def valOfRCWithTau(R_or_C_val, tau_val, n_tau=1, exact=False): 
   R_or_C_val = parseNum(R_or_C_val)
@@ -79,6 +84,9 @@ with sp.evaluate(False):
   f_Hz_of_n_midi_eq = sp.Eq(f_Hz, 440 * 2**((n_midi-69)/12))
   n_midi_of_f_Hz_eq = sp.Eq(n_midi, ((12 * sp.ln(f_Hz / 440)) / sp.ln(2)) + 69)
 
+
+semitone_up_ratio = 2**(sp.Rational(1, 12))
+semitone_down_ratio = 2**(sp.Rational(11, 12))/2
 
 def hzOfMidi(note, exact=False): 
   if exact:

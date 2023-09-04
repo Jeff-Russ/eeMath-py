@@ -7,8 +7,10 @@ import sympy as sp
 
 from eeMath.eeSymbols import symbs
 
+from eeMath.general_helpers import func_attr
 
-def subs(expr_or_eq=None, subs={}, persist=False):
+@func_attr(persist=False)
+def subs(expr_or_eq=None, subs_dict={}, persist=None):
   '''1) Normal mode of operation:
     subs(expr_or_eq)            # returns expr_or_eq.subs(symbs.subs)
     subs(expr_or_eq, subs_dict) # returns expr_or_eq.subs({**symbs.subs, **subs_dict})
@@ -29,6 +31,9 @@ def subs(expr_or_eq=None, subs={}, persist=False):
   '''
   global symbs
 
+  if persist is not None:
+    subs.persist = persist
+
   if   expr_or_eq is None: return symbs.subs
   elif isinstance(expr_or_eq, (set, list, tuple)):
     return { k:v for (k,v) in symbs.subs.items() if k in expr_or_eq } 
@@ -36,32 +41,32 @@ def subs(expr_or_eq=None, subs={}, persist=False):
   if isinstance(expr_or_eq, str):
     # also_include = []
     if expr_or_eq == 'clear':
-      if subs:
-        if isinstance(subs, dict):                 # clear, then set
-          symbs.subs = {**{symb:symb for symb in symbs.subs}, **subs}
-          # also_include = subs.keys() # we'll return those with defaults + those set
+      if subs_dict:
+        if isinstance(subs_dict, dict):                 # clear, then set
+          symbs.subs = {**{symb:symb for symb in symbs.subs}, **subs_dict}
+          # also_include = subs_dict.keys() # we'll return those with defaults + those set
 
-        elif isinstance(subs, (set, list, tuple)): # clear specified only
-          for symb in subs: symbs.subs[symb] = symb
-          # also_include = subs # we'll return those with defaults + those specified
+        elif isinstance(subs_dict, (set, list, tuple)): # clear specified only
+          for symb in subs_dict: symbs.subs[symb] = symb
+          # also_include = subs_dict # we'll return those with defaults + those specified
 
-        else: print(f'Warning: cannot clear defaults with {type(subs)} object provided as second argument')
+        else: print(f'Warning: cannot clear defaults with {type(subs_dict)} object provided as second argument')
       else:
         symbs.subs = { symb:symb for symb in symbs.subs }
       
     elif expr_or_eq == 'set':
-      if subs:
-        if isinstance(subs, dict):              # set
-          symbs.subs = {**symbs.subs, **subs}
-          # also_include = subs.keys() # we'll return those with defaults + those specified
+      if subs_dict:
+        if isinstance(subs_dict, dict):              # set
+          symbs.subs = {**symbs.subs, **subs_dict}
+          # also_include = subs_dict.keys() # we'll return those with defaults + those specified
 
-        else: print(f'Warning: cannot set defaults using {type(subs)} object')
+        else: print(f'Warning: cannot set defaults using {type(subs_dict)} object')
       else:
         print(f'Warning: cannot set defaults without second argument!')
 
     elif expr_or_eq == 'defaults':
-      if subs and isinstance(subs, (set, list, tuple)): # show defaults for specified
-        return { k:v for (k,v) in symbs.subs.items() if k != v and k in subs } 
+      if subs_dict and isinstance(subs_dict, (set, list, tuple)): # show defaults for specified
+        return { k:v for (k,v) in symbs.subs.items() if k != v and k in subs_dict } 
     
     else: print(f'Warning: unknown option {expr_or_eq} to subs()')
     
@@ -69,15 +74,15 @@ def subs(expr_or_eq=None, subs={}, persist=False):
     # return { k:v for (k,v) in symbs.subs.items() if k != v or k in also_include} 
     return { k:v for (k,v) in symbs.subs.items() if k != v} 
   
-  unidentified_keys = subs.keys() - expr_or_eq.free_symbols
+  unidentified_keys = subs_dict.keys() - expr_or_eq.free_symbols
   if unidentified_keys: 
     raise ValueError(f'The following subsitutions are for unknown symbols: {unidentified_keys}')
   
-  merged_subs = {**symbs.subs, **subs} 
+  merged_subs = {**symbs.subs, **subs_dict} 
   result = expr_or_eq.subs(merged_subs)
 
-  if persist:
-    symbs.subs = {**symbs.subs, **subs}
+  if subs.persist:
+    symbs.subs = {**symbs.subs, **subs_dict}
   return result
 
 #....... Boolean functions ...................................................
