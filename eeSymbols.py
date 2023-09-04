@@ -25,7 +25,7 @@ from eeMath.general_helpers import func_attr, printlToStr, strReplaceEach
 #    R_v_m is a resistor in series to an op-amps negative input (v_m). R_v_p for the other input
 # voltage and current control:
 #   small v_ or i_ then subscript is 'c' or 'v', each possibly followed by 'in' or 'out'
-#   EXCEPTION v_c and i_c are reserved for BTJ collector voltage/current: use *_cout or *_cin
+#   EXCEPTION v_c and i_c are reserved for BJT collector voltage/current: use *_cout or *_cin
 
 ########## SYMBOL HELPERS #########################################################################
 
@@ -69,26 +69,41 @@ def symbs(string_names, *, replace_each={}, latexify=None, force_subscript=None,
   symbnames =  [x for x in re_split(',[ ]*|[ ]+', string_names) if x.strip()] # the list compr. is to remove all-whitespace els
 
   if not isinstance(symbs.hist, OrderedDict): symbs.hist = OrderedDict()
-  hist_update = OrderedDict()
+
+  # hist_update = OrderedDict()
+  hist_update_arr = []
+
   hist_attrs['about'] = str(hist_attrs['about']) if 'about' in hist_attrs else '' # about:str is a required attribute for symbs
 
   if symbs.latexify:
     varnames = symbnames
     for i in range(len(varnames)):
+      provided_name = varnames[i]
       if symbs.latexify != 'auto' or varnames[i].isidentifier():
         symbnames[i] = varnameToLaTeX(varnames[i], replace_each)
       elif replace_each: symbnames[i] = strReplaceEach(varnames[i], replace_each)
       # else: we already have symbnames[i] so leave it alone
-      hist_update[symbnames[i]] = {'provided_name': varnames[i], 'sympy_name': symbnames[i], **hist_attrs, **kwargs}
+      # hist_update[symbnames[i]] = {'provided_name': provided_name, 'sympy_name': symbnames[i], **hist_attrs, **kwargs}
+      hist_update_arr.append( {'provided_name': provided_name, 'sympy_name': symbnames[i], **hist_attrs, **kwargs} )
   else:
     for i in range(len(symbnames)):
+      provided_name = symbnames[i]
       if replace_each: symbnames[i] = strReplaceEach(symbnames[i], replace_each)
-      hist_update[symbnames[i]] = {'provided_name': symbnames[i], 'sympy_name': symbnames[i], **hist_attrs, **kwargs}
+      # hist_update[symbnames[i]] = {'provided_name': provided_name, 'sympy_name': symbnames[i], **hist_attrs, **kwargs}
+      hist_update_arr.append( {'provided_name': provided_name, 'sympy_name': symbnames[i], **hist_attrs, **kwargs} )
 
   dups =  {x for x in symbnames if symbnames.count(x) > 1}
   if dups: raise ValueError(printlToStr('Duplicate symbol string representations:', *dups))
   symbnames = ' '.join(symbnames)
   symbs_tuple = symbols(symbnames, **kwargs)
+
+  hist_update = OrderedDict()
+  if type(symbs_tuple) == tuple:
+    for i in range(len(symbs_tuple)):
+      hist_update[symbs_tuple[i]] = hist_update_arr[i]
+  elif len(hist_update_arr) == 1:
+    hist_update[symbs_tuple] = hist_update_arr[0]
+  
 
   # rather than modifying, delete any entries and re-add to bump their position up
   symbs.hist = OrderedDict({k: symbs.hist[k] for k in symbs.hist if k not in hist_update})
@@ -153,11 +168,60 @@ real_finite = {'real':True, 'finite':True} # usage: symbols|symbs(st, **real_fin
 
 ########## GLOBAL SYMBOL DECLARATIONS #############################################################
 
+p_cnt = symbs('p_cnt',  about='percent as ratio 0..1', **real_finite)
+
+# thermal
+t_Kelvin, t_Celsius, t_Fahr = symbs('t_Kelvin, t_Celsius, t_Fahr', about='temperatures with units', **real_nonneg)
+
+V_T = symbs('V_T',  about='Thermal Voltage (BJT, etc)',  **real_nonneg)
+
+
+# BJT 
+
+# alpha, beta = symbs(r'{\alpha} {\beta}', **real_nonneg)
+alpha, beta = symbs('alpha, beta', replace_each={'al': r'\al', 'b': r'\b'},  about='BJT gain characteristics', **real_nonneg)
+a_F  = symbs(r'{\alpha_F}', **real_nonneg)
+
+# BJT large signal models (https://en.wikipedia.org/wiki/Bipolar_junction_transistor#Large-signal_models):
+I_B, I_C, I_E, V_BE, V_CE, V_CB = symbs('I_B, I_C, I_E, V_BE, V_CE, V_CB', about='BJT large signal model', **real_finite)
+
+
+# BJT small signal models (https://en.wikipedia.org/wiki/Bipolar_junction_transistor#Small-signal_models):
+i_B, i_C, i_E, v_BE, v_CE, v_CB = symbs('i_B, i_C, i_E, v_BE, v_CE, v_CB', about='BJT small signal model', **real_finite)
+
+
+# 
+
+
+I_ES  = symbs('I_ES', about='BJT reverse saturation current of the B-E diode (on the order of e-15 (fA) to e-12 (pA))', **real_finite)
+I_S  = symbs('I_S', about='BJT reverse saturation current (on the order of e-15 (fA) to e-12 (pA))', **real_finite)
+I_S0 = symbs('I_S0',  about='BJT (active mode) I_S0 = I_S when v_CE is 0', **real_nonneg)
+beta_0 = symbs('beta_0', replace_each={'b': r'\b'},  about='BJT (active mode) forward common-emitter current gain at zero bias, beta_0 = beta when v_CE is 0', **real_nonneg)
+
+V_A  = symbs('V_A', about='BJT Early voltage (typically 15–150V; smaller for smaller devices)', **real_nonneg)
+
+R_B, R_C, R_E  = symbs('R_B, R_C, R_E', about='BJT with resistor', **real_nonneg) # With resistor
+
+v_RB, v_RC, v_RE  = symbs('v_RB, v_RC, v_RE', about='BJT involving resistor (small signal model)', **real_finite) # Involving Resistor
+
+# differencial pairs (for op-amp, OTA, etc)
+v_B1, v_B2 = symbs('v_B1, v_B2', about='BJT differential pair (ending 2 is other side of pair)', **real_finite) # Involving Resistor
+v_diff, i_tail = symbs('v_diff, i_tail', about='BJT differential pair', **real_finite) # Involving Resistor
+i_Ep, i_Em, i_Bp, i_Bm, i_Cp, i_Cm = symbs('i_Ep, i_Em, i_Bp, i_Bm, i_Cp, i_Cm', about='BJT differential pair currents (m=inverting, p=non-invert)', **real_finite) # Involving Resistor
+
+
+# https://www.chu.berkeley.edu/wp-content/uploads/2020/01/Chenming-Hu_ch8-2.pdf
+
+
+# Transconductance
+g_m = symbs('g_m',  about='Transconductance',  **real_nonneg)
+
 # generic values
 V, I = symbs('V I', about='generic values', **real_finite)
 R, P_watts = symbs('R P_watts', about='generic values', **real_nonneg)
 
 # generic components 
+R_A, R_X = symbs('R_A, R_X', about='generic resistors', **real_nonneg)
 R, R1, R2, R3, R4, R5, R6, Rll, R_IN, R_in, R_GND, R_pull = symbs('R, R1, R2, R3, R4, R5, R6, Rll, R_IN, R_in, R_GND, R_pull', about='generic resistors', **real_nonneg)
 C, C1, C2, C3, C4, C5 = symbs('C, C1, C2, C3, C4, C5', about='generic capacitors', **real_nonneg)
 D, D1, D2, D3, D4 = symbs('D, D1, D2, D3, D4 ', about='generic diodes', **real_nonneg)
@@ -180,25 +244,6 @@ i_out = symbs('i_out', **real_finite)
 # Note frequency:
 n_midi, f_Hz = symbs('n_midi, f_Hz', **real_finite)
 
-
-# TODO: finish BTJ 
-
-
-# BTJ Gain Characteristics:
-# alpha, beta = symbs(r'{\alpha} {\beta}', **real_nonneg)
-alpha, beta = symbs('alpha, beta', replace_each={'al': r'\al', 'b': r'\b'}, **real_nonneg)
-
-# BJT large signal models (https://en.wikipedia.org/wiki/Bipolar_junction_transistor#Large-signal_models):
-I_B, I_C, I_E, I_ES, V_BE, V_CE, V_CB = symbs('I_B, I_C, I_E, I_ES, V_BE, V_CE, V_CB', **real_finite)
-V_T, a_F  = symbs(r'V_T, {\alpha_F}', **real_nonneg)
-
-R_B, R_C, R_E  = symbs('R_B, R_C, R_E', **real_nonneg) # With resistor
-V_R_B, V_R_C, V_R_E  = symbs('V_R_B, V_R_C, V_R_', **real_nonneg) # Involving Resistor
-
-# BJT small signal models (https://en.wikipedia.org/wiki/Bipolar_junction_transistor#Small-signal_models):
-i_b, i_c, i_e = symbs('i_b, i_c, i_e', **real_finite)
-
-# https://www.chu.berkeley.edu/wp-content/uploads/2020/01/Chenming-Hu_ch8-2.pdf
 
 
 # control voltages and currents:

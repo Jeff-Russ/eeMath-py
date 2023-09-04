@@ -37,15 +37,16 @@ def mkfuncVDivSolver(solve_for, *required_symbol_args, **symbol_with_defaults):
 
 
 def resistorJunctionVoltage(*Vn_Rn_tuples, exact=False, evaluate=False):
-  # test: resistorJunctionVoltage((v_out, 33*kΩ),(0, 27*kΩ),(5,27*kΩ))
-  # Each arg is a 2-tuple of voltage and resistance, 
-  # where either can be a number, a symbol or a string of a symbol
-  # DEMO: https://tinyurl.com/2e6aa5o5
-  # https://electronics.stackexchange.com/a/140278
-  # https://electronics.stackexchange.com/questions/631663/how-can-i-calculate-what-voltage-i-have-in-the-middle-of-2-series-resistors-in-a
-  # TODO: prevent division to evaluation of division irrationals: I tried sp.Rational but you can't use that with sp.parse_expr
-  #  UPDATE: Workaround: place the assignment using `sp.parse_expr` inside a `with sp.evaluate(False):` block.
-  # TODO: maybe return newly created symbols?
+  '''Usage Example: resistorJunctionVoltage((v_out, 33*kΩ),(0, 27*kΩ),(5,27*kΩ))
+  Each arg is a 2-tuple of voltage and resistance, 
+  where either can be a number, a symbol or a string of a symbol
+  DEMO: https://tinyurl.com/2e6aa5o5
+  https://electronics.stackexchange.com/a/140278
+  https://electronics.stackexchange.com/questions/631663/how-can-i-calculate-what-voltage-i-have-in-the-middle-of-2-series-resistors-in-a
+  TODO: prevent division to evaluation of division irrationals: I tried sp.Rational but you can't use that with sp.parse_expr
+    UPDATE: Workaround: place the assignment using `sp.parse_expr` inside a `with sp.evaluate(False):` block.
+  TODO: maybe return newly created symbols?
+  '''
   numerator = 0   # sum of each Vn/Rn
   denominator = 0 # sum of each 1/Rn
   new_symbols={}
@@ -82,6 +83,7 @@ def resistorJunctionVoltage(*Vn_Rn_tuples, exact=False, evaluate=False):
 RJunctV = resistorJunctionVoltage
 
 def parallelR(*R_tuple):
+  '''pass a bunch of resistance and get the resistance of them all in parallel'''
   if len(R_tuple) == 2: 
     with sp.evaluate(False):
       return (R_tuple[0] * R_tuple[1])/(R_tuple[0] + R_tuple[1])
