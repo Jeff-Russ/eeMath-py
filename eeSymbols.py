@@ -118,6 +118,69 @@ def symbs(string_names, *, replace_each={}, latexify=None, force_subscript=None,
 
   return symbs_tuple
 
+
+
+def getSymb(provided_name, find_all=False, recent=True, details=False, create=False, **kwargs):
+  '''This might be a temporary function until we fix symbs to return previously 
+  declared symbols rather than make duplicates and fix symbs.hist to index by
+  provided name rather than by symbol object. 
+
+  But for the time being, you can use this function to search and/or create
+  symbols by their name as string in the following ways (you can optionally
+  pass additional kwargs that will be sent to symbs if declaration happens):
+
+  1A. get the most recent symbol, CREATING it if never declared with symbs:
+    v_symb = getSymb('v_symb', create=True) # never returns None
+
+  2A. get the least recent symbol, CREATING it if never declared with symbs:
+    v_symb = getSymb('v_symb', recent=False, create=True) # never returns None
+
+  You can optionally tell getSymb to tell you it was just created for you by 
+  passing `create='inform'`, which returns two items, the symbol one plus
+  a boolean which is True if the symbol was just created: 
+
+  1B. v_symb, was_new = getSymb('v_symb', create='inform') 
+  2B. v_symb, was_new = getSymb('v_symb', recent=False, create='inform') 
+
+  3a. find the most recent symbol to be declared with symbs:
+    v_symb = getSymb('v_symb') # may return None
+
+  4a. find the least recent symbol to be declared with symbs :
+    v_symb = getSymb('v_symb', recent=False) # may return None
+
+  5a. get ALL symbols declared with symbs with a given name (most recent first)
+    symbs_tuple = getSymb('v_symb', find_all=True) # may be empty
+
+  6a. get ALL symbols declared with symbs with a given name (least recent first)
+    symbs_tuple = getSymb('v_symb', find_all=True, recent=False) # may be empty
+  
+  You can also choose to get the sub-dictionary in the symbs.hist dictionary
+    rather than the symbol itself by passing details=True. (THIS OPTION IS
+    RESULTS IN create=True BEING IGNORED.):
+
+  3b. v_symb_dict = getSymb('v_symb', details=True) # like 1a. 
+  4b...6b are all possible as well, by adding `details=True` to 4a...6b
+  '''
+  if find_all: results = []
+  hist_items = reversed(symbs.hist.items()) if recent else symbs.hist.items()
+  
+  for symb, d in hist_items:
+    if d['provided_name'] == provided_name:
+      thing = d if details else symb
+      if find_all: results.append(thing)
+      elif create == 'inform': return thing, False
+      else: return thing
+  
+  if find_all: return tuple(results)
+  elif create:
+    if create == 'inform':
+      return symbs(provided_name, **kwargs), True
+    else:
+      return symbs(provided_name, **kwargs)
+  else: return None
+
+
+
 # def allSymbs(symb=None, show=[]):
 #   '''
 #   show
@@ -168,7 +231,15 @@ real_finite = {'real':True, 'finite':True} # usage: symbols|symbs(st, **real_fin
 
 ########## GLOBAL SYMBOL DECLARATIONS #############################################################
 
+n_bits, n_bit, n_bin = symbs('n_bits, n_bit, n_bin',  about='binary', **real_finite)
+
 p_cnt = symbs('p_cnt',  about='percent as ratio 0..1', **real_finite)
+
+# Diodes and Other Semiconductors
+v_D = symbs('v_D', about="voltage across diode", **real_finite)
+i_D = symbs('i_D', about="current through diode", **real_finite)
+n_D = symbs('n_D', about="deality factor of diode (typically 1-2 - 1N4148 is 1.906)", **real_finite)
+
 
 # thermal
 t_Kelvin, t_Celsius, t_Fahr = symbs('t_Kelvin, t_Celsius, t_Fahr', about='temperatures with units', **real_nonneg)
@@ -190,11 +261,9 @@ I_B, I_C, I_E, V_BE, V_CE, V_CB = symbs('I_B, I_C, I_E, V_BE, V_CE, V_CB', about
 i_B, i_C, i_E, v_BE, v_CE, v_CB = symbs('i_B, i_C, i_E, v_BE, v_CE, v_CB', about='BJT small signal model', **real_finite)
 
 
-# 
 
-
-I_ES  = symbs('I_ES', about='BJT reverse saturation current of the B-E diode (on the order of e-15 (fA) to e-12 (pA))', **real_finite)
-I_S  = symbs('I_S', about='BJT reverse saturation current (on the order of e-15 (fA) to e-12 (pA))', **real_finite)
+I_ES  = symbs('I_ES', about='BJT (reverse) saturation current of the B-E diode (on the order of e-15 (fA) to e-12 (pA))', **real_finite)
+I_S  = symbs('I_S', about='Diode or BJT (reverse) saturation current (BJT: on the order of e-15 (fA) to e-12 (pA), 1N4148: 4.352e-9)', **real_finite)
 I_S0 = symbs('I_S0',  about='BJT (active mode) I_S0 = I_S when v_CE is 0', **real_nonneg)
 beta_0 = symbs('beta_0', replace_each={'b': r'\b'},  about='BJT (active mode) forward common-emitter current gain at zero bias, beta_0 = beta when v_CE is 0', **real_nonneg)
 
@@ -220,8 +289,16 @@ g_m = symbs('g_m',  about='Transconductance',  **real_nonneg)
 V, I = symbs('V I', about='generic values', **real_finite)
 R, P_watts = symbs('R P_watts', about='generic values', **real_nonneg)
 
+
+t, t_s, t_ms, t_us, t_ns, t_ps = symbs('t, t_s, t_ms, t_us, t_ns, t_ps', about='time variables', **real_finite)
+vps = symbs('vps', about='volts per second', **real_finite)
+v_0, v_t, v_now, v_then = symbs('v_0, v_t, v_now, v_then', about='voltages over time (small signal)', **real_finite)
+v_C, v_D, v_R = symbs('v_C, v_D, v_R', about='voltages across components (small signal)', **real_finite)
+i_C, i_D, i_R = symbs('i_C, i_D, i_R', about='currents across components (small signal)', **real_finite)
+
 # generic components 
-R_A, R_X = symbs('R_A, R_X', about='generic resistors', **real_nonneg)
+R_in, R_out, R_A, R_X, R_F, R_REF, R_pREF, R_nREF = symbs('R_in, R_out, R_A, R_X, R_F, R_REF, R_pREF, R_nREF', about='generic resistors', **real_nonneg)
+r_in, r_out, r_x, = symbs('r_in, r_out, r_x', about='variable resistors or resistance variables', **real_nonneg)
 R, R1, R2, R3, R4, R5, R6, Rll, R_IN, R_in, R_GND, R_pull = symbs('R, R1, R2, R3, R4, R5, R6, Rll, R_IN, R_in, R_GND, R_pull', about='generic resistors', **real_nonneg)
 C, C1, C2, C3, C4, C5 = symbs('C, C1, C2, C3, C4, C5', about='generic capacitors', **real_nonneg)
 D, D1, D2, D3, D4 = symbs('D, D1, D2, D3, D4 ', about='generic diodes', **real_nonneg)
@@ -234,9 +311,10 @@ tau1, n_tau = symbs(r'{\tau_1}, {n_{\tau}}', about='time constants', **real_fini
 
 
 # for ota.py and opamp.py:
+v_offset, v_gain, v_p_gain, v_m_gain = symbs('v_offset, v_gain, v_p_gain, v_m_gain', about='generic amplifier parameter', **real_finite)
 v_p, v_m, i_abc, i_out, v_out = symbs('v_p, v_m, i_abc, i_out, v_out', about='states at chip pins (not via resistors)', **real_finite)
 v_in, v_mIn, v_pIn = symbs('v_in, v_mIn, v_pIn', about='voltage input to chip config, not chip pins (i.e. via resistors)', **real_finite )
-R_v_m, R_fb, R_nfb, R_pfb, R_out = symbs('R_v_m, R_fb R_nfb, R_pfb, R_out', **real_nonneg)
+R_v_m, R_fb, R_nfb, R_pfb, R_out, R_v_p = symbs('R_v_m, R_fb R_nfb, R_pfb, R_out, R_v_p', **real_nonneg)
 
 
 i_out = symbs('i_out', **real_finite)

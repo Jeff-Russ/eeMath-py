@@ -8,7 +8,7 @@ from eeMath.math_helpers import lambdifier
 from eeMath.discrete import bitmaskList
 
 
-from eeMath.eeSymbols import V, I, R, Rll, R_IN, R_GND,v_in, v_out, V_pull, R_pull
+from eeMath.eeSymbols import V, I, R, Rll, R_IN, R_GND,v_in, v_out, V_pull, R_pull, V_REF, r_out
 
 ohmslaw_V_eq = sp.Eq(V, I*R)
 ohmslaw_I_eq = sp.Eq(I, sp.solve(ohmslaw_V_eq, I)[0])
@@ -36,8 +36,8 @@ def mkfuncVDivSolver(solve_for, *required_symbol_args, **symbol_with_defaults):
 # def vdivRin(Vout, Vin=5, R2=10000): return ( ( Vin - Vout ) * R2 ) / Vout
 
 
-def resistorJunctionVoltage(*Vn_Rn_tuples, exact=False, evaluate=False):
-  '''Usage Example: resistorJunctionVoltage((v_out, 33*kΩ),(0, 27*kΩ),(5,27*kΩ))
+def voltageAtResistorJunction(*Vn_Rn_tuples, exact=False, evaluate=False):
+  '''Usage Example: voltageAtResistorJunction((v_out, 33*kΩ),(0, 27*kΩ),(5,27*kΩ))
   Each arg is a 2-tuple of voltage and resistance, 
   where either can be a number, a symbol or a string of a symbol
   DEMO: https://tinyurl.com/2e6aa5o5
@@ -80,60 +80,12 @@ def resistorJunctionVoltage(*Vn_Rn_tuples, exact=False, evaluate=False):
     if new_symbols: return V_expression, new_symbols
     else: return solution
 
-RJunctV = resistorJunctionVoltage
+vRJunct = voltageAtResistorJunction
 
-def parallelR(*R_tuple):
-  '''pass a bunch of resistance and get the resistance of them all in parallel'''
-  if len(R_tuple) == 2: 
-    with sp.evaluate(False):
-      return (R_tuple[0] * R_tuple[1])/(R_tuple[0] + R_tuple[1])
+def vDivExpr(v1, r1, r2, v2=0):
   with sp.evaluate(False):
-    denom = 1 / R_tuple[0]
-    for R_item in R_tuple[1:]: denom += 1 / R_item
-    return 1 / denom
+    if v2 == 0: return v1 * (r2/(r1+r2))
+    else: return v1 * (r2/(r1+r2)) + v2 * (r1/(r1+r2))
 
-llR=parallelR # an alias for easier typing
 
-def get_Rll_eq(Rll_sym_or_val, *R_tuple):
-  '''examples:
-  get_Rll_eq(Rll, R1, R2) # returns Eq(Rll, (R1*R2)/(R_1+R_2) )
-  solve(get_Rll_eq(500, 1_000, R2), R2)[0].evalf() # returns 1000'''
-  with sp.evaluate(False):
-    return sp.Eq(Rll_sym_or_val, parallelR(*R_tuple))
 
-# def IParallelR(*R_lst):
-#   subs = []
-#   # R_tpl = sp.symbols( f'R0:{len(R_lst)}', real=True, nonnegative=True)
-#   for i, R_val in enumerate(R_lst):
-#     if isinstance(R_val, numbers.Number):
-#       subs
-  
-#   for R_ in Rn:
-#     if R_ is not None:
-#       subs.append( (y, )) )
-#     product *= number
-#   return product
-
-def parallelRPermutations(resistor_values, always_parallel_R=None, lsb_last=False, inv=False):
-  '''Output is list of all permutations of parallel resistances from any
-  (or all) of the resistor_values list. The output list size is: 
-    2**len(resistor_values) - 1  elements
-    (minus 1 because the state with no resistors is skipped)
-  always_parallel_R (2nd arg), if provided, specifies a resistance that is always in
-  in parallel with the circuit no matter what state (permutation).
-  lsb_last (default=False) (3rd arg) If this is set to 
-    True, the first resistance in the return all resistances
-    in parallel, if False, it only one resistor. 
-  inv (default=False) (4th arg) Set this to True if resistor outputs
-    are active-LOW (enbled by LOW rather than HIGH)
-  '''
-  results = []
-  for bint in range(1, 2**len(resistor_values)):
-    active_parallel_resitors = bitmaskList(bint, resistor_values, lsb_last, inv)
-    if active_parallel_resitors:
-      if always_parallel_R:
-        results.append(llR(*active_parallel_resitors, always_parallel_R))
-      else:
-        results.append(llR(*active_parallel_resitors))
-    # results.append(active_parallel_resitors)
-  return results

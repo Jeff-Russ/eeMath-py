@@ -27,8 +27,11 @@ from eeMath.eeSymbols import *
 from eeMath.general_helpers import *
 from eeMath.graphing import *
 from eeMath.math_helpers import *
+# from eeMath.components import *
+from eeMath.resistance import *
 from eeMath.thermal import *
 from eeMath.freq_and_time import *
+# from eeMath.diode import *
 from eeMath.bjt import *
 from eeMath.opamp import *
 from eeMath.ota  import *
