@@ -18,6 +18,20 @@ def tempConvert(temp, unit, to_unit):
   elif mode == 'F C': return (temp - 32) * 5/9 
 
 
+# THIS WORKS BEST WITH FALSTAD + real_ota
+VT_68F = sp.Rational(1263, 50000) # 293.13K, 67.964F, 19.98C
+# = 0.02526 (exact) making 1/(2*V_T) = 19.794140 (approx)
+
+VT_20C = VT_68F
+
+# THIS WORKS BEST WITH FALSTAD + ideal_ota
+VT_74F = sp.Rational(23, 900) # 296.56K, 74.138F, 23.4C 
+# = 0.02585 where 5 repeats making 1/(2*V_T) = 19.56521 (approx)
+VT_23C = VT_74F
+
+
+VT_74F = sp.Rational(2521, 100000)
+
 
 VT_spice = sp.Rational(517, 20000) # 299.98K, 80.3F, 26.83C (supposed to be 300K exactly)
 # = 0.02585 mV making 1/(2*V_T) = 10000/517 ≈ 19.342359767891683

@@ -538,6 +538,9 @@ def attrs( # formerly dictionizeAtts
   return attributes_dict
 
 
+def calcGainAndOffset(min_in, max_in, min_out, max_out):
+  return (max_out - min_out)/(max_in - min_in), min_out - min_in
+
 
 import sympy as sp
 # import numpy as np
